@@ -15,6 +15,7 @@
 # param 7: minimum fragment length for featureCounts
 # param 8: count multi-mapping reads (boolean integer)
 # param 9: prefix to give output file (study name)
+# param 10: paired end? (boolean integer)
 
 cd "$1" #set working directory
 wd="$1"
@@ -26,36 +27,63 @@ GTF="$6"
 MINFRAG=$7
 COUNTMM=$8
 OUTPUTPREFIX="$9"
+ISPAIRED="$10"
 
 # initial QC
-mkdir -f fastqc
-mkdir -f ./fastqc/before_trim
-mkdir -f ./fastqc/after_trim
+mkdir -p fastqc
+mkdir -p ./fastqc/before_trim
+mkdir -p ./fastqc/after_trim
 fastqc -t $THREADS -o ./fastqc/before_trim ./raw_data/*.fastq.gz
 multiqc ./fastqc/before_trim/*
 
 # trimming and final QC (using GNU parallel)
-mkdir -f trimmed
-parallel -j $THREADS trim_galore \
---quality $QSCORE --phred33 -o ./trimmed \
---fastqc -o ./fastqc/after_trim ::: ./raw_data/*.fastq.gz
-multiqc ./fastqc/after_trim/*
+mkdir -p trimmed
+
+if [ $ISPAIRED -eq 0 ]
+then
+	parallel -j $THREADS trim_galore \
+	--quality $QSCORE --phred33 -o ./trimmed \
+	--fastqc -o ./fastqc/after_trim ::: ./raw_data/*.fastq.gz
+	multiqc ./fastqc/after_trim/*
+else
+	parallel -j $THREADS trim_galore --paired \
+	--quality $QSCORE --phred33 -o ./trimmed \
+	--fastqc -o ./fastqc/after_trim \
+	::: ./raw_data/*_1.fastq.gz ::: ./raw_data/*_2.fastq.gz
+	multiqc ./fastqc/after_trim/*
+fi
 
 # alignment
 mkdir -f alignment
-for file in ./raw_data/*trimmed.fq.gz
-do
-  prefix=$(basename -- "$i")
-  prefix="./alingment/""${prefix%.fastq*}"
-  STAR --runMode alignReads --genomeDir $GENOME --runThreadN $THREADS \
-  --readFilesCommand 'gunzip -c' --readFilesIn $file \
-  --outFileNamePrefix $prefix
-done
+if [ $ISPAIRED -eq 0 ]
+then
+	for file in ./raw_data/*trimmed.fq.gz
+	do
+	  prefix=$(basename -- "$file")
+	  prefix="./alingment/""${prefix%_trimmed.fastq*}"
+	  STAR --runMode alignReads --genomeDir $GENOME --runThreadN $THREADS \
+	  --readFilesCommand 'gunzip -c' --readFilesIn $file \
+	  --outFileNamePrefix $prefix
+	done
+else
+	leftFiles=./raw_data/*_1_trimmed.fq.gz
+	for file in $leftFiles
+	do
+	  outPrefix=$(basename -- "$file")
+	  inPrefix="${prefix%_1_trimmed.fastq*}"
+	  outPrefix="./alingment/""${prefix%_1_trimmed.fastq*}"
+	  STAR --runMode alignReads --genomeDir $GENOME --runThreadN $THREADS \
+	  --readFilesCommand 'gunzip -c' \
+	  --readFilesIn "$inPrefix"_1_trimmed.fastq.gz "$inPrefix"_2_trimmed.fastq.gz \
+	  --outFileNamePrefix $outPrefix
+	done
+fi
+fi
 
 # read assigment / summarization
-mkdir -f counts
+mkdir -p counts
 Rscript "~/Documents/GitHub/morimotoLab/190131_Rsubread_pipeline.r" \
 "$WD" $STRANDING $THREADS "$GTF" $MINFRAG $COUNTMM "$OUTPUTPREFIX"
 
 # prepare for DE (allow user to do by hand for now)
-mkdir -f DE_analysis
+mkdir -p DE_analysis
