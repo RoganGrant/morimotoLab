@@ -9,11 +9,13 @@ gtfPath = params[4]
 minFrag = as.numeric(params[5])
 includeMM = as.numeric(params[6])
 outPrefix = params[7]
+isPaired = params[8]
 
 #perform summarization with given parameters
 files = list.files(path = "./alignment", pattern = "Aligned\\.out\\.sam$", full.names = T)
 counts = Rsubread::featureCounts(files = files, annot.ext = gtfPath, minFragLength = minFrag, 
-                                 nthreads = threads, isGTFAnnotationFile = T, countMultiMappingReads = includeMM)
+                                 nthreads = threads, isGTFAnnotationFile = T, countMultiMappingReads = includeMM,
+                                 isPairedEnd = isPaired, requireBothEndsMapped = T)
 
 #output processed counts
 outName = paste0(getwd(), "/counts/", outPrefix, "_subread_counts.rds")
