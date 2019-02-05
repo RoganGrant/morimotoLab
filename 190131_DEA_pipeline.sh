@@ -54,7 +54,8 @@ if [ $isPaired -eq 0 ]
 then
 	parallel -j $THREADS trim_galore \
 	--quality $QCUTOFF --phred33 -o ./trimmed \
-	--fastqc -o ./fastqc/after_trim ::: ./raw_data/*.fastq.gz
+	--fastqc --fastqc_args "--outdir ./fastqc/after_trim" \
+	::: ./raw_data/*.fastq.gz
 	multiqc ./fastqc/after_trim/* -o ./fastqc/after_trim/
 else
 	#--xapply only runs pairs, as opposed to every combination of outputs
