@@ -52,16 +52,18 @@ mkdir -p trimmed
 
 if [ $isPaired -eq 0 ]
 then
-	parallel -j $THREADS trim_galore \
+	#-q prevents removal of quotes
+	parallel -q -j $THREADS trim_galore \
 	--quality $QCUTOFF --phred33 -o ./trimmed \
 	--fastqc --fastqc_args "--outdir ./fastqc/after_trim" \
 	::: ./raw_data/*.fastq.gz
 	multiqc ./fastqc/after_trim/* -o ./fastqc/after_trim/
 else
+	#-q prevents removal of quotes
 	#--xapply only runs pairs, as opposed to every combination of outputs
-	parallel --xapply -j $THREADS trim_galore --paired \
+	parallel -q --xapply -j $THREADS trim_galore --paired \
 	--quality $QCUTOFF --phred33 -o ./trimmed \
-	--fastqc --fastqc_args "--outdir ./fastqc/after_trim" \
+	--fastqc_args "--outdir ./fastqc/after_trim" \
 	::: ./raw_data/*_1.fastq.gz ::: ./raw_data/*_2.fastq.gz
 	multiqc ./fastqc/after_trim/* -o ./fastqc/after_trim/
 fi
