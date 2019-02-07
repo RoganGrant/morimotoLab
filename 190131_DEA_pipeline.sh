@@ -55,7 +55,7 @@ then
 	#-q prevents removal of quotes
 	parallel -q -j $THREADS trim_galore \
 	--quality $QCUTOFF --phred33 -o ./trimmed \
-	--fastqc --fastqc_args "--outdir ./fastqc/after_trim" \
+	--fastqc_args "--outdir ./fastqc/after_trim" \
 	::: ./raw_data/*.fastq.gz
 	multiqc ./fastqc/after_trim/* -o ./fastqc/after_trim/
 else
@@ -72,24 +72,24 @@ fi
 mkdir -p alignment
 if [ $isPaired -eq 0 ]
 then
-	for file in ./raw_data/*trimmed.fq.gz
+	for file in ./trimmed/*trimmed.fq.gz
 	do
-	  prefix=$(basename -- "$file")
-	  prefix="./alignment/""${prefix%_trimmed.fastq*}"
+	  prefix=$(basename "$file")
+	  prefix="./alignment/""${prefix%_trimmed.fq.gz}"
 	  STAR --runMode alignReads --genomeDir $GENOME --runThreadN $THREADS \
 	  --readFilesCommand 'gunzip -c' --readFilesIn $file \
 	  --outFileNamePrefix $prefix
 	done
 else
-	leftFiles=./raw_data/*_1_val_1.fq.gz
+	leftFiles=./trimmed/*_1_val_1.fq.gz
 	for file in $leftFiles
 	do
-	  outPrefix=$(basename -- "$file")
-	  inPrefix="${prefix%_1_val_1.fastq.gz}"
+	  outPrefix=$(basename "$file")
+	  inPrefix="${outPrefix%_1_val_1.fq.gz}"
 	  outPrefix="./alignment/""$outPrefix"
 	  STAR --runMode alignReads --genomeDir $GENOME --runThreadN $THREADS \
 	  --readFilesCommand 'gunzip -c' \
-	  --readFilesIn "$inPrefix"_1_val_1.fastq.gz "$inPrefix"_2_val_2.fastq.gz \
+	  --readFilesIn ./trimmed/"$inPrefix"_1_val_1.fq.gz ./trimmed/"$inPrefix"_2_val_2.fq.gz \
 	  --outFileNamePrefix $outPrefix
 	done
 fi
