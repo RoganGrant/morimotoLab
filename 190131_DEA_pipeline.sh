@@ -86,7 +86,7 @@ else
 	do
 	  outPrefix=$(basename "$file")
 	  inPrefix="${outPrefix%_1_val_1.fq.gz}"
-	  outPrefix="./alignment/""$outPrefix"
+	  outPrefix="./alignment/""$inPrefix"
 	  STAR --runMode alignReads --genomeDir $GENOME --runThreadN $THREADS \
 	  --readFilesCommand 'gunzip -c' \
 	  --readFilesIn ./trimmed/"$inPrefix"_1_val_1.fq.gz ./trimmed/"$inPrefix"_2_val_2.fq.gz \
