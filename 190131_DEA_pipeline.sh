@@ -97,7 +97,7 @@ fi
 # read assigment / summarization
 mkdir -p counts
 Rscript ~/Documents/GitHub/morimotoLab/190131_Rsubread_pipeline.r \
-"$WD" $STRANDING $THREADS "$GTF" $MINFRAG $COUNTMM "$OUTPUTPREFIX" \
+"$wd" $STRANDING $THREADS "$GTF" $MINFRAG $COUNTMM "$OUTPUTPREFIX" \
 $isPaired
 
 # prepare for DE (allow user to do by hand for now)
