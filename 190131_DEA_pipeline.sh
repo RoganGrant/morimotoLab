@@ -5,7 +5,7 @@
 
 # parameters:
 # param 1: root directory
-# should contain raw-data subdirectory with gzipped fastq files
+# should contain raw_data subdirectory with gzipped fastq files
 # param 2: stranding
 # 0 = unstranded or paired, 1 = first-strand, 2 = second-strand
 # param 3: number of processors
@@ -26,6 +26,14 @@ GTF="$6"
 MINFRAG=$7
 COUNTMM=$8
 OUTPUTPREFIX="$9"
+
+# ensure all parameters have been given
+# note: $# is the number of arguments passed to the script
+if [ $# -ne 9 ]
+then
+	echo "Error: incorrect number of arguments" > logfile.log
+	exit 1
+fi
 
 #first determine if the files are paired
 cd raw_data
